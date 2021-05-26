@@ -1,12 +1,21 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Post;
 
 use Illuminate\Http\Request;
+use App\Post;
+use App\Tag;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Str;
 
 class PostController extends Controller
 {
+    protected $validation = [
+        'date' => 'required|date',
+        'content' => 'required|string',
+        'image' => 'nullable|url'
+    ];
+
     /**
      * Display a listing of the resource.
      *
@@ -14,8 +23,9 @@ class PostController extends Controller
      */
     public function index()
     {
-      $posts = Post::all();
-      dd($posts);
+        $posts = Post::all();
+
+        return view('posts.index', compact('posts'));
     }
 
     /**
@@ -25,7 +35,9 @@ class PostController extends Controller
      */
     public function create()
     {
-        //
+        $tags = Tag::all();
+
+        return view('posts.create', compact('tags'));
     }
 
     /**
@@ -36,7 +48,27 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validation = $this->validation;
+        $validation['title'] = 'required|string|max:255|unique:posts';
+
+        // validation
+        $request->validate($this->validation);
+
+        $data = $request->all();
+
+        // controllo checkbox
+        $data['published'] = !isset($data['published']) ? 0 : 1;
+        // imposto lo slug partendo dal title
+        $data['slug'] = Str::slug($data['title'], '-');
+
+        // Insert
+        $newPost = Post::create($data);
+
+        // aggiungo i tags
+        $newPost->tags()->attach($data['tags']);
+
+        // redirect
+        return redirect()->route('posts.index');
     }
 
     /**
@@ -47,7 +79,7 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-      dd($post->comments);
+        return view('posts.show', compact('post'));
     }
 
     /**
@@ -56,9 +88,11 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function edit($id)
+    public function edit(Post $post)
     {
-        //
+        $tags = Tag::all();
+
+        return view('posts.edit', compact('post', 'tags'));
     }
 
     /**
@@ -68,9 +102,30 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, Post $post)
     {
-        //
+        $validation = $this->validation;
+        $validation['title'] = 'required|string|max:255|unique:posts,title,' . $post->id;
+
+        // validation
+        $request->validate($validation);
+
+        $data = $request->all();
+
+        // controllo checkbox
+        $data['published'] = !isset($data['published']) ? 0 : 1;
+        // imposto lo slug partendo dal title
+        $data['slug'] = Str::slug($data['title'], '-');
+
+        // Update
+        $post->update($data);
+
+        // aggiorno i tags
+        $post->tags()->sync($data['tags']);
+
+        // return
+        return redirect()->route('posts.show', $post);
+
     }
 
     /**
@@ -79,8 +134,12 @@ class PostController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Post $post)
     {
-        //
+        $post->tags()->detach();
+
+        $post->delete();
+
+        return redirect()->route('posts.index')->with('message', 'Il post è stato eliminato! ');
     }
 }
