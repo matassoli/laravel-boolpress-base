@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use App\Post;
@@ -25,7 +25,7 @@ class PostController extends Controller
     {
         $posts = Post::all();
 
-        return view('posts.index', compact('posts'));
+        return view('admin.posts.index', compact('posts'));
     }
 
     /**
@@ -37,7 +37,7 @@ class PostController extends Controller
     {
         $tags = Tag::all();
 
-        return view('posts.create', compact('tags'));
+        return view('admin.posts.create', compact('tags'));
     }
 
     /**
@@ -52,7 +52,7 @@ class PostController extends Controller
         $validation['title'] = 'required|string|max:255|unique:posts';
 
         // validation
-        $request->validate($this->validation);
+        $request->validate($validation);
 
         $data = $request->all();
 
@@ -65,10 +65,12 @@ class PostController extends Controller
         $newPost = Post::create($data);
 
         // aggiungo i tags
-        $newPost->tags()->attach($data['tags']);
+        if( isset($data['tags']) ) {
+            $newPost->tags()->attach($data['tags']);
+        }
 
         // redirect
-        return redirect()->route('posts.index');
+        return redirect()->route('admin.posts.index');
     }
 
     /**
@@ -79,7 +81,7 @@ class PostController extends Controller
      */
     public function show(Post $post)
     {
-        return view('posts.show', compact('post'));
+        return view('admin.posts.show', compact('post'));
     }
 
     /**
@@ -92,7 +94,7 @@ class PostController extends Controller
     {
         $tags = Tag::all();
 
-        return view('posts.edit', compact('post', 'tags'));
+        return view('admin.posts.edit', compact('post', 'tags'));
     }
 
     /**
@@ -121,10 +123,13 @@ class PostController extends Controller
         $post->update($data);
 
         // aggiorno i tags
+        if( !isset($data['tags']) ) {
+            $data['tags'] = [];
+        }
         $post->tags()->sync($data['tags']);
 
         // return
-        return redirect()->route('posts.show', $post);
+        return redirect()->route('admin.posts.show', $post);
 
     }
 
@@ -136,10 +141,8 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        $post->tags()->detach();
-
         $post->delete();
 
-        return redirect()->route('posts.index')->with('message', 'Il post è stato eliminato! ');
+        return redirect()->route('admin.posts.index')->with('message', 'Il post è stato eliminato! ');
     }
 }

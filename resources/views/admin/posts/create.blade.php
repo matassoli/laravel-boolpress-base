@@ -16,7 +16,7 @@
     </div>
 @endif
 
-<form action="{{route('posts.store')}}" method="POST">
+<form action="{{route('admin.posts.store')}}" method="POST">
 	@csrf
 	@method('POST')
 	<div class="form-group">
@@ -54,5 +54,5 @@
 		<button type="submit" class="btn btn-primary">Crea</button>
 	</div>
 </form>
-
+	
 @endsection

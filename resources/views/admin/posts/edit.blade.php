@@ -16,7 +16,7 @@
     </div>
 @endif
 
-<form action="{{route('posts.update', ['post' => $post->id])}}" method="POST">
+<form action="{{route('admin.posts.update', ['post' => $post->id])}}" method="POST">
 	@csrf
 	@method('PUT')
 	<div class="form-group">
@@ -54,5 +54,5 @@
 		<button type="submit" class="btn btn-primary">Modifica</button>
 	</div>
 </form>
-
+	
 @endsection
